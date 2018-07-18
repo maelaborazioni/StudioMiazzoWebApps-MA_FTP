@@ -216,7 +216,7 @@ function verificaDatiFtp()
 	/** @type {Array<Number>}*/
 	var arrDitteConDati = [];
 	var msg = '<html>Sono presenti nuovi dati inviati dallo studio e non ancora acquisiti per ';
-	/** @type {JSFoundset<db:/ma_anagrafiche/ditte>}*/
+	/** @type {JSFoundSet<db:/ma_anagrafiche/ditte>}*/
 	var fs = databaseManager.getFoundSet(globals.Server.MA_ANAGRAFICHE,globals.Table.DITTE);
     if(fs.find())
     {
