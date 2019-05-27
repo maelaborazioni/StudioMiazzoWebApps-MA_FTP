@@ -73,11 +73,14 @@ function riceviTabelleDittaDipendenti(params,arrDitte)
  */
 function riceviTabelleDitte(params,arrDitte)
 {
-//	forms.mao_history_main.filterOperations();
-	
 	if(arrDitte.length == 0)
+	{
+		// controlla se ci sono nuovi inserimenti di date di cessazione ed aggiorna la situazione degli utenti
+		if(globals.ma_utl_hasModule(globals.Module.AUTORIZZAZIONI))
+		   		scopes.users.updateSecUserLavoratori();
 	    return;
-		
+	}
+	
 	var currIdDitta = arrDitte[0];
 	var arrDitteNew = [];
 	
@@ -91,15 +94,14 @@ function riceviTabelleDitte(params,arrDitte)
 				                                            "",
 															globals.TipoConnessione.CLIENTE);
 	addJsonWebServiceJob(ftpUrl,
-				             dParams,
-							 vUpdateOperationStatusFunction,
-							 null,
-							 function(retObj)
-							 {
-								 riceviTabelleDitte(params,arrDitteNew);
-								 forms.mao_history.operationDone(retObj);
-							 });
-	   
+			             dParams,
+						 vUpdateOperationStatusFunction,
+						 null,
+						 function(retObj)
+						 {
+							 riceviTabelleDitte(params,arrDitteNew);
+							 forms.mao_history.operationDone(retObj);
+						 });	   
 }
 
 
