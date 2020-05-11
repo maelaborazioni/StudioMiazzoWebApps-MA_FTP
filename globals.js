@@ -1,4 +1,24 @@
 /**
+ * Aggiorna la modalità di acquisizione dei dati generali
+ * 
+ * @param params
+ *
+ * @properties={typeid:24,uuid:"B65026C2-94A4-4541-A060-101A59230F66"}
+ */
+function aggiornaDatiVersione(params)
+{
+	var url = globals.WS_LU_URL + "/Giornaliera/AggiornaDatiVersione";
+    var response = globals.getWebServiceResponse(url, params);
+    
+    if (response)
+    	return response.returnValue;
+    else 
+    {
+       globals.ma_utl_showErrorDialog('Errore durante l\'aggiornamento della versione su ftp', 'Aggiornamento dati versione');	
+       return false;
+    }
+}
+/**
  * Lancia l'operazione lunga di ricezione tabelle ditta/dipendenti
  * 
  * @param {Object} [params]
@@ -214,6 +234,16 @@ function verificaDatiDittaFtp(idDitta,idGruppoInst)
  */
 function verificaDatiFtp()
 {
+	// aggiorna sempre la versione del cliente
+    var versionParams = {
+    	databasecliente : globals.customer_db_name
+    }
+    if(!globals.aggiornaDatiVersione(versionParams))
+    {
+    	plugins.busy.unblock();
+    	return;
+    }
+	
 	var ditte;
 	/** @type {Array<Number>}*/
 	var arrDitteConDati = [];
@@ -246,10 +276,11 @@ function verificaDatiFtp()
     if(arrDitteConDati.length > 0)
     {
     	var idGruppoInstallazione = globals.getGruppoInstallazioneDitta(arrDitteConDati[0]);
-    	var codDitta = globals.getCodiceDittaPrincipaleGruppoInstallazione(idGruppoInstallazione);
-    	
-    	// controllo per caso commercialisti Hexelia
-    	var idDitta = isCodiceDittaDisponibile(codDitta) ? arrDitteConDati[0] : globals.getIdDitta(codDitta);
+//    	var codDitta = globals.getCodiceDittaPrincipaleGruppoInstallazione(idGruppoInstallazione);
+//    	
+//    	// controllo per caso commercialisti Hexelia
+//    	var idDitta = isCodiceDittaDisponibile(codDitta) ? arrDitteConDati[0] : globals.getIdDitta(codDitta);
+    	var idDitta = arrDitteConDati[0];
     	
     	// acquisizione sincrona delle tabelle generali per la sola ditta principale associata al gruppo di installazione
     	var params = globals.inizializzaParametriRiceviTabelle(idDitta,
