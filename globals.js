@@ -1,4 +1,23 @@
 /**
+ * Aggiorna la modalità di acquisizione dei dati generali
+ * 
+ * @param params
+ *
+ * @properties={typeid:24,uuid:"B65026C2-94A4-4541-A060-101A59230F66"}
+ */
+function aggiornaDatiVersione(params)
+{
+	var url = globals.WS_LU + "/Lu32/AggiornaDatiVersione";
+    var response = globals.getWebServiceResponse(url, params);
+   
+    if (response && response.StatusCode == HTTPStatusCode.OK)
+    	return response.ReturnValue;
+	 
+    globals.ma_utl_showErrorDialog('Errore durante l\'aggiornamento della versione su ftp', 'Aggiornamento dati versione');	
+	return false;
+ }
+
+/**
  * Lancia l'operazione lunga di ricezione tabelle ditta/dipendenti
  * 
  * @param {Object} [params]
@@ -7,7 +26,17 @@
  */
 function riceviTabelleDitta(params)
 {
-	var ftpUrl = WS_LU_URL + "/Giornaliera/RiceviTabelleDitta";
+	// add new operation info for future updates
+	var operation = scopes.operation.create(params['idditta'],globals.getGruppoInstallazioneDitta(params['idditta']),params['periodo'],globals.OpType.RTDD);
+	if(operation == null || operation.operationId == null)
+	{
+		globals.ma_utl_showErrorDialog('Errore durante la preparazione dell\'operazione lunga. Riprovare o contattare il  servizio di Assistenza.');
+		return;
+	}
+	params.operationid = operation.operationId;
+	params.operationhash = operation.operationHash;
+	
+	var ftpUrl = globals.WS_LU + "/Lu32/RiceviTabelleDittaAsync";
 	addJsonWebServiceJob(ftpUrl,
 		                 params,
 						 vUpdateOperationStatusFunction);
@@ -22,7 +51,17 @@ function riceviTabelleDitta(params)
  */
 function riceviTabelleGenerali(params)
 {	
-	var ftpUrl = WS_LU_URL + "/Giornaliera/RiceviTabelleGenerali";
+	// add new operation info for future updates
+	var operation = scopes.operation.create(params['idditta'],globals.getGruppoInstallazioneDitta(params['idditta']),params['periodo'],globals.OpType.RTG);
+	if(operation == null || operation.operationId == null)
+	{
+		globals.ma_utl_showErrorDialog('Errore durante la preparazione dell\'operazione lunga. Riprovare o contattare il  servizio di Assistenza.');
+		return;
+	}
+	params.operationid = operation.operationId;
+	params.operationhash = operation.operationHash;
+	
+	var ftpUrl = globals.WS_LU + "/Lu32/RiceviTabelleGeneraliAsync";
 	addJsonWebServiceJob(ftpUrl,
 		                 params,
 						 vUpdateOperationStatusFunction,
@@ -42,14 +81,26 @@ function riceviTabelleGenerali(params)
  */
 function riceviTabelleDittaDipendenti(params,arrDitte)
 {	
-	var ftpUrl = WS_LU_URL + "/Giornaliera/RiceviTabelleGenerali";
+	// add new operation info for future updates
+	var operation = scopes.operation.create(params['idditta'],globals.getGruppoInstallazioneDitta(params['idditta']),params['periodo'],globals.OpType.RTG);
+	if(operation == null || operation.operationId == null)
+	{
+		globals.ma_utl_showErrorDialog('Errore durante la preparazione dell\'operazione lunga. Riprovare o contattare il  servizio di Assistenza.');
+		return;
+	}
+	params.operationid = operation.operationId;
+	params.operationhash = operation.operationHash;
+	var ftpUrl = globals.WS_LU + "/Lu32/RiceviTabelleGeneraliAsync";
 	addJsonWebServiceJob(ftpUrl,
 		                 params,
 						 vUpdateOperationStatusFunction,
 						 null
-						 ,function(retObj)
+						 ,function(_retObj)
 						 {
-							 if(retObj && retObj['status']['op_status'] == 255)
+							 /** @type {{statusCode:Number, returnValue:Object, message:String, operationId:String, 
+			                    operationHash:String, status:Number, start:Date, end:Date, progress:Number, lastProgress:Date}} */
+					         var retObj = _retObj;
+							 if(retObj && retObj.status == 255)
 							 {
 							   	plugins.busy.unblock();
 								globals.ma_utl_showWarningDialog('L\'operazione di ricezione delle tabelle generali non è terminata correttamente. <br/>Contattare il servizio di assistenza per ulteriori informazioni.','Ricezione dati ditta/dipendenti');	
@@ -87,38 +138,33 @@ function riceviTabelleDitte(params,arrDitte)
 	for(var d = 1; d < arrDitte.length; d++)
 		arrDitteNew.push(arrDitte[d]);
 		
-	var ftpUrl = WS_LU_URL + "/Giornaliera/RiceviTabelleDitta";
+	var ftpUrl = globals.WS_LU + "/Lu32/RiceviTabelleDittaAsync";
 	
 	var dParams = globals.inizializzaParametriRiceviTabelle(currIdDitta,
 		                                                    globals.getGruppoInstallazioneDitta(currIdDitta),
 				                                            "",
 															globals.TipoConnessione.CLIENTE);
+	// add new operation info for future updates
+	var operation = scopes.operation.create(dParams['idditta'],dParams['idgruppoinstallazione'],dParams['periodo'],globals.OpType.RTDD);
+	if(operation == null || operation.operationId == null)
+	{
+		globals.ma_utl_showErrorDialog('Errore durante la preparazione dell\'operazione lunga. Riprovare o contattare il  servizio di Assistenza.');
+		return;
+	}
+	params.operationid = operation.operationId;
+	params.operationhash = operation.operationHash;
 	addJsonWebServiceJob(ftpUrl,
 			             dParams,
 						 vUpdateOperationStatusFunction,
 						 null,
-						 function(retObj)
+						 function(_retObj)
 						 {
+							 /** @type {{statusCode:Number, returnValue:Object, message:String, operationId:String, 
+			                    operationHash:String, status:Number, start:Date, end:Date, progress:Number, lastProgress:Date}} */
+					         var retObj = _retObj;
 							 riceviTabelleDitte(params,arrDitteNew);
 							 forms.mao_history.operationDone(retObj);
 						 });	   
-}
-
-
-/**
- * Lancia l'operazione lunga di inserimento dei certificati telematici ricevuti ma non ancora
- * inseriti nello storico
- *  
- * @param params
- *
- * @properties={typeid:24,uuid:"77C6036B-09C5-4FA8-8819-C50AEE4BDA77"}
- */
-function riceviCertificatiTelematici(params)
-{
-	var url = WS_LU_URL + "/Giornaliera/RiceviCertificatiTelematici";
-	addJsonWebServiceJob(url,
-		                 params,
-						 vUpdateOperationStatusFunction);
 }
 
 /**
@@ -167,13 +213,11 @@ function inizializzaParametriRiceviTabelle(_idditta,_gruppoinst,_gruppolav,_tipo
  */
 function verificaDatiSuFtp(params, tipologia)
 {
-//	params.tipologiaverifica = tipologia;
-	
-	var url = globals.WS_LU_URL + "/Giornaliera/VerificaPresenzaDatiFtp";
+	var url = globals.WS_LU + "/Ftp32/VerificaPresenzaDati";
     var response = globals.getWebServiceResponse(url, params);
     
-    if (response)
-    	return response.returnValue;
+    if (response && response.StatusCode == HTTPStatusCode.OK)
+       return response.ReturnValue;
     else 
     {
        globals.ma_utl_showErrorDialog('Errore durante la verifica della presenza di dati su ftp', 'Verifica presenza di dati da acquisire');	
@@ -214,6 +258,17 @@ function verificaDatiDittaFtp(idDitta,idGruppoInst)
  */
 function verificaDatiFtp()
 {
+	// aggiorna sempre la versione del cliente
+    var versionParams = {
+    	server          : globals.server_db_name,   
+    	databasecliente : globals.customer_db_name
+    }
+    if(!globals.aggiornaDatiVersione(versionParams))
+    {
+    	plugins.busy.unblock();
+    	return;
+    }
+	
 	var ditte;
 	/** @type {Array<Number>}*/
 	var arrDitteConDati = [];
@@ -246,10 +301,11 @@ function verificaDatiFtp()
     if(arrDitteConDati.length > 0)
     {
     	var idGruppoInstallazione = globals.getGruppoInstallazioneDitta(arrDitteConDati[0]);
-    	var codDitta = globals.getCodiceDittaPrincipaleGruppoInstallazione(idGruppoInstallazione);
-    	
-    	// controllo per caso commercialisti Hexelia
-    	var idDitta = isCodiceDittaDisponibile(codDitta) ? arrDitteConDati[0] : globals.getIdDitta(codDitta);
+//    	var codDitta = globals.getCodiceDittaPrincipaleGruppoInstallazione(idGruppoInstallazione);
+//    	
+//    	// controllo per caso commercialisti Hexelia
+//    	var idDitta = isCodiceDittaDisponibile(codDitta) ? arrDitteConDati[0] : globals.getIdDitta(codDitta);
+    	var idDitta = arrDitteConDati[0];
     	
     	// acquisizione sincrona delle tabelle generali per la sola ditta principale associata al gruppo di installazione
     	var params = globals.inizializzaParametriRiceviTabelle(idDitta,
