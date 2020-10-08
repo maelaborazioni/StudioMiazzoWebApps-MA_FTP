@@ -7,7 +7,7 @@
  */
 function aggiornaDatiVersione(params)
 {
-	var url = globals.WS_LU + "/Lu32/AggiornaDatiVersione";
+	var url = globals.WS_LU + "/Lu32/UpdateVersionData";
     var response = globals.getWebServiceResponse(url, params);
    
     if (response && response.StatusCode == HTTPStatusCode.OK)
@@ -36,7 +36,7 @@ function riceviTabelleDitta(params)
 	params.operationid = operation.operationId;
 	params.operationhash = operation.operationHash;
 	
-	var ftpUrl = globals.WS_LU + "/Lu32/RiceviTabelleDittaAsync";
+	var ftpUrl = globals.WS_LU + "/Lu32/ImportFactoryTableDataAsync";
 	addJsonWebServiceJob(ftpUrl,
 		                 params,
 						 vUpdateOperationStatusFunction);
@@ -61,7 +61,7 @@ function riceviTabelleGenerali(params)
 	params.operationid = operation.operationId;
 	params.operationhash = operation.operationHash;
 	
-	var ftpUrl = globals.WS_LU + "/Lu32/RiceviTabelleGeneraliAsync";
+	var ftpUrl = globals.WS_LU + "/Lu32/ImportGeneralTableDataAsync";
 	addJsonWebServiceJob(ftpUrl,
 		                 params,
 						 vUpdateOperationStatusFunction,
@@ -90,7 +90,7 @@ function riceviTabelleDittaDipendenti(params,arrDitte)
 	}
 	params.operationid = operation.operationId;
 	params.operationhash = operation.operationHash;
-	var ftpUrl = globals.WS_LU + "/Lu32/RiceviTabelleGeneraliAsync";
+	var ftpUrl = globals.WS_LU + "/Lu32/ImportGeneralTableDataAsync";
 	addJsonWebServiceJob(ftpUrl,
 		                 params,
 						 vUpdateOperationStatusFunction,
@@ -138,7 +138,7 @@ function riceviTabelleDitte(params,arrDitte)
 	for(var d = 1; d < arrDitte.length; d++)
 		arrDitteNew.push(arrDitte[d]);
 		
-	var ftpUrl = globals.WS_LU + "/Lu32/RiceviTabelleDittaAsync";
+	var ftpUrl = globals.WS_LU + "/Lu32/ImportFactoryTableDataAsync";
 	
 	var dParams = globals.inizializzaParametriRiceviTabelle(currIdDitta,
 		                                                    globals.getGruppoInstallazioneDitta(currIdDitta),
@@ -213,7 +213,7 @@ function inizializzaParametriRiceviTabelle(_idditta,_gruppoinst,_gruppolav,_tipo
  */
 function verificaDatiSuFtp(params, tipologia)
 {
-	var url = globals.WS_LU + "/Ftp32/VerificaPresenzaDati";
+	var url = globals.WS_LU + "/Ftp32/VerifyTableData";
     var response = globals.getWebServiceResponse(url, params);
     
     if (response && response.StatusCode == HTTPStatusCode.OK)
@@ -263,11 +263,11 @@ function verificaDatiFtp()
     	server          : globals.server_db_name,   
     	databasecliente : globals.customer_db_name
     }
-    if(!globals.aggiornaDatiVersione(versionParams))
-    {
-    	plugins.busy.unblock();
-    	return;
-    }
+//    if(!globals.aggiornaDatiVersione(versionParams))
+//    {
+//    	plugins.busy.unblock();
+//    	return;
+//    }
 	
 	var ditte;
 	/** @type {Array<Number>}*/
